@@ -25,9 +25,11 @@ def create_app(config_name='development'):
         'sqlite:///shop.db'
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['SESSION_COOKIE_SECURE'] = False
     app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+    is_production = os.environ.get('FLASK_ENV') == 'production' or os.environ.get('ENVIRONMENT') == 'production'
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None' if is_production else 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = is_production
 
     # Initialize extensions
     db.init_app(app)
