@@ -31,7 +31,8 @@ def create_app(config_name='development'):
 
     # Initialize extensions
     db.init_app(app)
-    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://localhost:3000"]}})
+    allowed_origins = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000').split(',')
+    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": [origin.strip() for origin in allowed_origins if origin.strip()]}})
 
     # Initialize Flask-Login
     login_manager = LoginManager()
