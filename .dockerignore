@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.db
+.venv/
+.env
+.git/
+.gitignore
+.vscode/
+instance/
+frontend/node_modules/
+frontend/dist/

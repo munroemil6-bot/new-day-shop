@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlaskLogin1</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; }
+        nav { margin-bottom: 1rem; }
+        nav a { margin-right: 1rem; }
+        .alert { padding: 0.75rem; margin-bottom: 1rem; border-radius: 4px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .alert-danger { background: #ffebee; color: #c62828; }
+        .alert-info { background: #e3f2fd; color: #1565c0; }
+        form { max-width: 320px; }
+        input, button { display: block; width: 100%; margin-bottom: 0.75rem; padding: 0.5rem; }
+        .card { border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('shop') }}">Shop</a>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('purchase_history') }}">Purchase History</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('signup') }}">Sign Up</a>
+        {% endif %}
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Shop</h2>
+{% if items %}
+    {% for item in items %}
+        <div class="card">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description or 'No description provided.' }}</p>
+            <p>Price: ${{ '%.2f'|format(item.price) }}</p>
+            <p>Stock: {{ item.stock }}</p>
+            <a href="{{ url_for('buy_item', item_id=item.id) }}">Buy</a>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No items available yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Buy {{ item.name }}</h2>
+<p>Price: ${{ '%.2f'|format(item.price) }}</p>
+<p>Available stock: {{ item.stock }}</p>
+<form method="post">
+    <input type="number" name="quantity" min="1" value="1" required>
+    <button type="submit">Confirm purchase</button>
+</form>
+{% endblock %}

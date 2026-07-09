@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Purchase History</h2>
+{% if purchases %}
+    {% for purchase in purchases %}
+        <div class="card">
+            <p><strong>{{ purchase.item.name }}</strong></p>
+            <p>Quantity: {{ purchase.quantity }}</p>
+            <p>Total: ${{ '%.2f'|format(purchase.total_price) }}</p>
+            <p>Purchased: {{ purchase.purchased_at }}</p>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>You have no purchases yet.</p>
+{% endif %}
+{% endblock %}
