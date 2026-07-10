@@ -20,7 +20,7 @@ function Home({ user }) {
     <div className="hero-card">
       <div>
         <p className="eyebrow">Fresh everyday essentials</p>
-        <h2>Welcome to the Kenyan Shop</h2>
+        <h2>Welcome to New Day Shop</h2>
         {user ? <p>You are signed in as {user.username}.</p> : <p>Use the menu to browse products, sign up, or log in.</p>}
       </div>
       <div className="hero-highlight">
