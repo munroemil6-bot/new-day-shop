@@ -117,6 +117,78 @@ body {
   box-shadow: 0 10px 20px rgba(24, 48, 39, 0.08);
 }
 
+.shop-layout {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 2fr 1fr;
+  align-items: start;
+}
+
+.quantity-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+}
+
+.cart-panel {
+  background: #f5f3e7;
+  border: 1px solid #e4efe1;
+  border-radius: 18px;
+  padding: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.cart-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cart-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.quantity-controls .button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.checkout-box {
+  border-top: 1px solid #d9e4d6;
+  padding-top: 0.75rem;
+}
+
 .button {
   background: #fff;
   border: 1px solid #b9ccb6;
@@ -159,6 +231,14 @@ form > div {
 .message {
   margin-top: 1rem;
   color: #35613f;
+}
+
+.message.success {
+  color: #2f6a3b;
+}
+
+.message.error {
+  color: #a23f3f;
 }
 
 h2 {

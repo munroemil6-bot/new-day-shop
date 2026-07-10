@@ -139,9 +139,19 @@ function Signup() {
   );
 }
 
+function formatCurrency(value) {
+  return `Ksh ${Number(value || 0).toFixed(2)}`;
+}
+
 function Shop({ user }) {
   const [items, setItems] = useState([]);
   const [message, setMessage] = useState('Loading shop items...');
+  const [cart, setCart] = useState([]);
+  const [selectedQuantities, setSelectedQuantities] = useState({});
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [amountGiven, setAmountGiven] = useState('');
+  const [checkoutMessage, setCheckoutMessage] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -160,29 +170,111 @@ function Shop({ user }) {
       });
   }, [user]);
 
-  const buyItem = (itemId) => {
-    fetch(`${API_BASE}/api/purchases`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item_id: itemId, quantity: 1 }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.error) {
-          setMessage(data.error);
-        } else {
-          setMessage('Purchase completed.');
-          setItems((prevItems) =>
-            prevItems.map((item) =>
-              item.id === itemId ? { ...item, stock: item.stock - 1 } : item
-            )
-          );
+  const addToCart = (item) => {
+    const requestedQuantity = Number(selectedQuantities[item.id] ?? 1);
+    const quantity = Number.isFinite(requestedQuantity) && requestedQuantity > 0 ? Math.floor(requestedQuantity) : 1;
+
+    if (quantity > item.stock) {
+      setMessage(`Only ${item.stock} unit(s) available for ${item.name}.`);
+      return;
+    }
+
+    setCart((prevCart) => {
+      const existingEntry = prevCart.find((entry) => entry.item.id === item.id);
+      const currentQuantity = existingEntry ? existingEntry.quantity : 0;
+
+      if (currentQuantity + quantity > item.stock) {
+        setMessage(`Only ${item.stock - currentQuantity} more unit(s) can be added for ${item.name}.`);
+        return prevCart;
+      }
+
+      if (existingEntry) {
+        return prevCart.map((entry) =>
+          entry.item.id === item.id ? { ...entry, quantity: entry.quantity + quantity } : entry
+        );
+      }
+
+      return [...prevCart, { itemId: item.id, item, quantity }];
+    });
+
+    setMessage(`Added ${quantity} x ${item.name} to the cart.`);
+  };
+
+  const updateCartQuantity = (itemId, delta) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((entry) => {
+          if (entry.item.id !== itemId) {
+            return entry;
+          }
+
+          const nextQuantity = entry.quantity + delta;
+          return nextQuantity > 0 ? { ...entry, quantity: nextQuantity } : null;
+        })
+        .filter(Boolean)
+    );
+  };
+
+  const removeFromCart = (itemId) => {
+    setCart((prevCart) => prevCart.filter((entry) => entry.item.id !== itemId));
+  };
+
+  const totalAmount = cart.reduce((sum, entry) => sum + entry.item.price * entry.quantity, 0);
+  const amountEntered = Number(amountGiven);
+  const changeAmount = paymentMethod === 'cash' && Number.isFinite(amountEntered) && amountEntered >= totalAmount
+    ? amountEntered - totalAmount
+    : 0;
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      setCheckoutMessage('Your cart is empty.');
+      return;
+    }
+
+    if (paymentMethod === 'cash') {
+      const amountValue = Number(amountGiven);
+      if (!Number.isFinite(amountValue) || amountValue < totalAmount) {
+        setCheckoutMessage('Enter an amount that covers the total before checking out.');
+        return;
+      }
+    }
+
+    setIsCheckingOut(true);
+    setCheckoutMessage('Processing your purchase...');
+
+    try {
+      for (const entry of cart) {
+        const response = await fetch(`${API_BASE}/api/purchases`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item_id: entry.item.id, quantity: entry.quantity }),
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Unable to complete purchase.');
         }
-      })
-      .catch(() => {
-        setMessage('Unable to complete purchase.');
-      });
+
+        setItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === entry.item.id ? { ...item, stock: item.stock - entry.quantity } : item
+          )
+        );
+      }
+
+      setCart([]);
+      setAmountGiven('');
+      setCheckoutMessage(
+        paymentMethod === 'cash'
+          ? `Purchase completed. Change: ${formatCurrency(changeAmount)}`
+          : 'Purchase completed via M-Pesa.'
+      );
+    } catch (error) {
+      setCheckoutMessage(error.message || 'Unable to complete purchase.');
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   if (!user) {
@@ -198,18 +290,123 @@ function Shop({ user }) {
     <div className="panel">
       <h2>Shop</h2>
       <p className="message">{message}</p>
-      <div className="card-grid">
-        {items.map((item) => (
-          <div key={item.id} className="card">
-            <h3>{item.name}</h3>
-            <p>{item.description}</p>
-            <p><strong>Price:</strong> Ksh {item.price.toFixed(2)}</p>
-            <p><strong>Stock:</strong> {item.stock}</p>
-            <button className="button primary" onClick={() => buyItem(item.id)} disabled={item.stock < 1}>
-              {item.stock > 0 ? 'Buy' : 'Sold out'}
+
+      <div className="shop-layout">
+        <div className="card-grid">
+          {items.map((item) => (
+            <div key={item.id} className="card">
+              <h3>{item.name}</h3>
+              <p>{item.description}</p>
+              <p><strong>Price:</strong> {formatCurrency(item.price)}</p>
+              <p><strong>Stock:</strong> {item.stock}</p>
+              <div className="quantity-picker">
+                <label htmlFor={`qty-${item.id}`}>Qty</label>
+                <input
+                  id={`qty-${item.id}`}
+                  type="number"
+                  min="1"
+                  max={item.stock}
+                  value={selectedQuantities[item.id] ?? 1}
+                  onChange={(event) =>
+                    setSelectedQuantities((prev) => ({
+                      ...prev,
+                      [item.id]: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <button className="button primary" onClick={() => addToCart(item)} disabled={item.stock < 1}>
+                {item.stock > 0 ? 'Add to cart' : 'Sold out'}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <aside className="cart-panel">
+          <h3>Cart</h3>
+          {cart.length === 0 ? (
+            <p>Your cart is empty. Add a few items to get started.</p>
+          ) : (
+            <ul className="cart-list">
+              {cart.map((entry) => (
+                <li key={entry.item.id} className="cart-item">
+                  <div>
+                    <strong>{entry.item.name}</strong>
+                    <p>{formatCurrency(entry.item.price)} each</p>
+                  </div>
+                  <div className="cart-controls">
+                    <div className="quantity-controls">
+                      <button type="button" className="button" onClick={() => updateCartQuantity(entry.item.id, -1)}>
+                        -
+                      </button>
+                      <span>{entry.quantity}</span>
+                      <button type="button" className="button" onClick={() => updateCartQuantity(entry.item.id, 1)}>
+                        +
+                      </button>
+                    </div>
+                    <button type="button" className="button" onClick={() => removeFromCart(entry.item.id)}>
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className="checkout-box">
+            <p><strong>Total:</strong> {formatCurrency(totalAmount)}</p>
+            <div className="payment-options">
+              <label>
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="cash"
+                  checked={paymentMethod === 'cash'}
+                  onChange={() => setPaymentMethod('cash')}
+                />
+                Cash (KSH)
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="mpesa"
+                  checked={paymentMethod === 'mpesa'}
+                  onChange={() => setPaymentMethod('mpesa')}
+                />
+                M-Pesa
+              </label>
+            </div>
+
+            {paymentMethod === 'cash' && (
+              <div>
+                <label htmlFor="amount-given">Amount given</label>
+                <input
+                  id="amount-given"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amountGiven}
+                  onChange={(event) => setAmountGiven(event.target.value)}
+                  placeholder="Enter amount"
+                />
+              </div>
+            )}
+
+            {paymentMethod === 'cash' && amountGiven !== '' && (
+              <p className={amountEntered >= totalAmount ? 'message success' : 'message error'}>
+                {amountEntered >= totalAmount
+                  ? `Change: ${formatCurrency(changeAmount)}`
+                  : `Still need ${formatCurrency(totalAmount - amountEntered)}`}
+              </p>
+            )}
+
+            <button className="button primary" onClick={handleCheckout} disabled={isCheckingOut || cart.length === 0}>
+              {isCheckingOut ? 'Processing...' : 'Complete purchase'}
             </button>
+            {checkoutMessage && <p className="message">{checkoutMessage}</p>}
           </div>
-        ))}
+        </aside>
       </div>
     </div>
   );
