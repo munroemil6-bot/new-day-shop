@@ -23,14 +23,6 @@ function Home({ user }) {
         <h2>Welcome to New Day Shop</h2>
         {user ? <p>You are signed in as {user.username}.</p> : <p>Use the menu to browse products, sign up, or log in.</p>}
       </div>
-      <div className="hero-highlight">
-        <h3>Popular picks</h3>
-        <ul>
-          <li>Maize Flour</li>
-          <li>Mandazi Pack</li>
-          <li>Chai Tea</li>
-        </ul>
-      </div>
     </div>
   );
 }

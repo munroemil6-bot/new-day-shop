@@ -6,7 +6,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
-DEFAULT_PASSWORD = '12345'
 MIN_PASSWORD_LENGTH = 4
 
 
@@ -20,20 +19,15 @@ class User(UserMixin, db.Model):
     purchases = db.relationship('Purchase', back_populates='user', cascade='all, delete-orphan')
 
     def set_password(self, password):
-        password_value = password or DEFAULT_PASSWORD
-        if len(password_value) < MIN_PASSWORD_LENGTH:
+        if not password or len(password) < MIN_PASSWORD_LENGTH:
             raise ValueError(f'Password must be at least {MIN_PASSWORD_LENGTH} characters long.')
-        self.password_hash = generate_password_hash(password_value)
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-        }
+        return {'id': self.id, 'username': self.username, 'email': self.email,}
 
 
 class Item(db.Model):
@@ -47,13 +41,7 @@ class Item(db.Model):
     purchases = db.relationship('Purchase', back_populates='item', cascade='all, delete-orphan')
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'price': self.price,
-            'stock': self.stock,
-        }
+        return {'id': self.id, 'name': self.name, 'description': self.description, 'price': self.price, 'stock': self.stock,}
 
 
 class Purchase(db.Model):
@@ -70,14 +58,7 @@ class Purchase(db.Model):
     item = db.relationship('Item', back_populates='purchases')
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'quantity': self.quantity,
-            'total_price': self.total_price,
-            'purchased_at': self.purchased_at.isoformat(),
-            'item': self.item.to_dict() if self.item else None,
-            'user': {
-                'id': self.user.id,
-                'username': self.user.username,
+        return {'id': self.id, 'quantity': self.quantity, 'total_price': self.total_price, 'purchased_at': self.purchased_at.isoformat(), 'item': self.item.to_dict() if self.item else None, 'user': {
+                'id': self.user.id, 'username': self.user.username,
             },
         }

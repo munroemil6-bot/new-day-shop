@@ -1,8 +1,3 @@
-"""
-Flask Application Factory
-Initializes and configures the Flask app with extensions and API routes.
-"""
-
 import os
 from flask import Flask, jsonify, redirect, request, url_for
 from flask_cors import CORS
@@ -12,10 +7,7 @@ from app.routes import register_routes
 
 
 def create_app(config_name='development'):
-    """
-    Application Factory Pattern
-    Creates and configures Flask app instance
-    """
+
     app = Flask(__name__)
 
     # Configuration

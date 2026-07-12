@@ -1,4 +1,4 @@
-# Flask + React Shop
+# newdy shop
 
 This project runs as a Flask app that serves the built React frontend from the backend.
 
@@ -82,20 +82,196 @@ For a single user in one line before add/commit:
 u = User(username='naomi', email='naomi@gmail.com'); u.set_password('12345'); db.session.add(u); db.session.commit()
 ```
 
-## Add items from the Flask shell
+## Flask Shell Commands
+
+Enter the Flask shell:
 
 ```bash
 pipenv run flask shell
 ```
 
+### Setup (one-time in shell)
+
 ```python
 from app import create_app
-from app.models import db, Item
+from app.models import db, User, Item, Purchase
 app = create_app()
-with app.app_context():
-    i = Item(name='Maize Flour', description='2 kg pack of white maize flour', price=240.0, stock=12)
-    db.session.add(i)
-    db.session.commit()
+app.app_context().push()
+```
+
+### Add Items to Shop
+
+```python
+# Single item
+i = Item(name='Maize Flour', description='2 kg pack of white maize flour', price=240.0, stock=12)
+db.session.add(i)
+db.session.commit()
+
+# Multiple items at once
+items = [
+    Item(name='Rice', description='1 kg white rice', price=150.0, stock=20),
+    Item(name='Beans', description='1 kg dried beans', price=120.0, stock=15),
+    Item(name='Sugar', description='2 kg sugar pack', price=200.0, stock=25)
+]
+db.session.add_all(items)
+db.session.commit()
+```
+
+### View All Items
+
+```python
+# List all items
+items = Item.query.all()
+for item in items:
+    print(f"ID: {item.id}, Name: {item.name}, Price: {item.price}, Stock: {item.stock}")
+
+# Find item by ID
+item = Item.query.get(1)
+print(item.name, item.price)
+
+# Find item by name
+item = Item.query.filter_by(name='Maize Flour').first()
+```
+
+### Edit/Update Items in Shop
+
+```python
+# Update item by ID
+item = Item.query.get(1)
+item.name = 'Premium Maize Flour'
+item.price = 250.0
+item.stock = 15
+db.session.commit()
+
+# Update stock for multiple items
+Item.query.filter_by(name='Rice').update({'stock': 30})
+db.session.commit()
+```
+
+### Delete Items from Shop
+
+```python
+# Delete single item by ID
+item = Item.query.get(1)
+db.session.delete(item)
+db.session.commit()
+
+# Delete item by name
+item = Item.query.filter_by(name='Rice').first()
+db.session.delete(item)
+db.session.commit()
+
+# Delete all items from a query
+items = Item.query.filter(Item.price > 500).all()
+for item in items:
+    db.session.delete(item)
+db.session.commit()
+```
+
+### Add Purchases to User (User Buys Item)
+
+```python
+# User purchases an item
+user = User.query.filter_by(username='naomi').first()
+item = Item.query.filter_by(name='Maize Flour').first()
+
+purchase = Purchase(user_id=user.id, item_id=item.id, quantity=2, total_price=item.price * 2)
+db.session.add(purchase)
+db.session.commit()
+
+# Add multiple purchases
+purchases = [
+    Purchase(user_id=1, item_id=1, quantity=1, total_price=240.0),
+    Purchase(user_id=1, item_id=2, quantity=3, total_price=450.0)
+]
+db.session.add_all(purchases)
+db.session.commit()
+```
+
+### View User Purchases
+
+```python
+# Get all purchases for a user
+user = User.query.filter_by(username='naomi').first()
+purchases = user.purchases
+for purchase in purchases:
+    print(f"Item: {purchase.item.name}, Qty: {purchase.quantity}, Total: {purchase.total_price}")
+
+# Get purchase by ID
+purchase = Purchase.query.get(1)
+print(f"User: {purchase.user.username}, Item: {purchase.item.name}")
+
+# List all purchases
+all_purchases = Purchase.query.all()
+```
+
+### Delete Purchases
+
+```python
+# Delete single purchase by ID
+purchase = Purchase.query.get(1)
+db.session.delete(purchase)
+db.session.commit()
+
+# Delete all purchases for a user
+user = User.query.filter_by(username='naomi').first()
+Purchase.query.filter_by(user_id=user.id).delete()
+db.session.commit()
+
+# Delete all purchases of a specific item
+Purchase.query.filter_by(item_id=1).delete()
+db.session.commit()
+```
+
+### Delete Users
+
+```python
+# Delete user by username
+user = User.query.filter_by(username='naomi').first()
+db.session.delete(user)
+db.session.commit()
+
+# Delete user by ID
+user = User.query.get(1)
+db.session.delete(user)
+db.session.commit()
+```
+
+### View All Users
+
+```python
+# List all users
+users = User.query.all()
+for user in users:
+    print(f"ID: {user.id}, Username: {user.username}, Email: {user.email}")
+
+# Find user by username
+user = User.query.filter_by(username='naomi').first()
+
+# Find user by email
+user = User.query.filter_by(email='naomi@gmail.com').first()
+```
+
+### Quick Reference - One-Liners
+
+```python
+# Add item
+Item.query.session.add(Item(name='Wheat', price=300.0, stock=10)) or db.session.commit()
+
+# Update item stock
+Item.query.get(1).stock = 50; db.session.commit()
+
+# Delete item
+Item.query.get(1) and db.session.delete(Item.query.get(1)) or db.session.commit()
+
+# Count total items in shop
+print(Item.query.count())
+
+# Count total users
+print(User.query.count())
+
+# Total purchases made
+print(Purchase.query.count())
 ```
 
 For a single item in one line before add/commit:
